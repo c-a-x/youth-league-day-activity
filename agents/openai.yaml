@@ -1,5 +1,5 @@
 interface:
   display_name: "团日活动材料生成"
-  short_description: "根据主题通知生成活动案例、总结表、心得体会与PPT提示词"
-  default_prompt: "调用团日活动skill，根据我提供的Word通知生成完整团日活动材料；生成前先询问实际举办的单日日期，不要把通知中的时间段直接当作活动时间。"
+  short_description: "根据团日活动通知生成案例、总结表、心得和PPT材料"
+  default_prompt: "Use $youth-league-day-activity to根据我提供的团日活动通知和基本信息，合理补全活动过程，并生成我需要的规范团日活动材料。"
 
