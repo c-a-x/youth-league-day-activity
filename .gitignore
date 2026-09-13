@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 ~$*.docx
 .DS_Store
+
+# 试运生成的交付成品
+团日活动材料/

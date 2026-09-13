@@ -18,7 +18,8 @@ description: Use when a user provides a college or Youth League activity notice,
 3. 判断文风：用户说“按已经开展写”“活动已经办完”“过程你自己编”“过程你自己合理生成”“写真实一点”等，直接使用已开展活动的过去时；只有用户明确要方案、预览或尚未开展时才使用“拟/计划/建议”。
 4. 根据通知主题和活动形式补全自然、连贯的活动过程、互动内容、讨论话题、一般活动氛围和一般性成效；不把合理补全误当成证据造假。
 5. 活动主题、日期、地点、人数和主要流程一旦确定，案例、总结表、心得体会和 PPT 必须使用同一组信息；PPT 不得擅自改成另一种活动形式。
-6. 按 [references/generation-spec.md](references/generation-spec.md) 生成对应文件，按 [references/layout-spec.md](references/layout-spec.md) 保留模板版式并完成检查。
+6. 按 [references/output-format.md](references/output-format.md) 输出事实核对卡作为统一事实源，并按其固定规则命名文件和输出交付报告。
+7. 按 [references/generation-spec.md](references/generation-spec.md) 生成对应文件，按 [references/layout-spec.md](references/layout-spec.md) 保留模板版式并完成检查。
 
 ## 可以合理补全的活动内容
 
@@ -49,6 +50,24 @@ description: Use when a user provides a college or Youth League activity notice,
 ## 照片与材料提交
 
 除非用户明确要求，否则本 skill 不负责照片生成、照片处理、照片插入、智慧团建、PU、邮箱上传或其他材料提交操作。通知中的照片数量、邮箱、截止时间、文件命名和录入要求作为材料要求记录，必要时放入核对说明或备注，不大量写入活动案例、心得体会或 PPT 正文。
+
+## 内置脚本
+
+模板填充和渲染检查优先使用内置脚本完成，保证每次生成的版式一致，不要每次现场重写：
+
+- `scripts/build_docs.py`：从 `assets/` 模板生成 DOCX。子命令 `case`（活动案例）、`table`（总结表）、`reflection`（心得体会），输入 JSON 文件、`--out` 指定输出路径；脚本自动完成占位替换、模板注释行删除和固定版式（宋体四号正文、固定 25 磅行距、首行缩进两字符；总结表只填单元格不动结构）。JSON 字段用法见脚本开头 docstring。
+- `scripts/render_preview.py`：把 DOCX 转为 PDF 并逐页导出 PNG 预览（Word COM + PyMuPDF），用于交付前渲染检查；环境缺少 Word 或渲染失败时如实说明，不要声称已检查。
+
+脚本运行报错或输出异常时才改用手工方式处理，并在交付说明中注明。
+
+## 固定输出格式
+
+对外输出遵循 [references/output-format.md](references/output-format.md) 的固定格式，保证每次生成的规范性一致：
+
+1. 成稿前先输出事实核对卡，作为本批材料的统一事实源；
+2. 文件统一保存到 `团日活动材料/` 目录（用户指定目录时除外），按 `材料类型-{支部简称}-{YYYYMMDD}` 命名，预览版加 `-预览` 后缀；
+3. 交付后输出固定结构的交付报告：交付清单、事实核对（主题、日期口径、地点、人数、主要流程）、QA 结果、待确认事项；
+4. 用户或通知明确指定命名、目录或输出形式时，以用户或通知为准。
 
 ## 交付物与模板
 

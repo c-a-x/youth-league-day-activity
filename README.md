@@ -62,6 +62,15 @@ Skill 可以围绕通知主题合理补全主持开场、理论学习、材料�
 
 正式材料中不使用 `[待补]`。缺失信息可以在独立的核对清单中提醒，预览版总结表的未知字段保持空白。
 
+## 固定输出格式
+
+每次生成的对外输出遵循统一格式（详见 `references/output-format.md`）：
+
+1. 成稿前先输出**事实核对卡**（主题、学院/支部、日期口径、地点、人数、文风口径、篇幅口径、交付物清单），作为所有材料的统一事实源；
+2. 文件统一保存到 `团日活动材料/` 目录，按 `材料类型-{支部简称}-{YYYYMMDD}` 命名，预览版加 `-预览` 后缀；
+3. 交付后输出固定结构的**交付报告**：交付清单、事实核对（主题、日期口径、地点、人数、主要流程）、QA 结果和待确认事项；
+4. 用户或通知明确指定命名、目录或输出形式时，以用户或通知为准。
+
 ## 目录结构
 
 ```text
@@ -72,9 +81,13 @@ youth-league-day-activity/
 ├─ assets/
 │  ├─ 活动案例模板.docx             # 活动案例 Word 模板
 │  └─ 团日活动总结表（团支部）.docx  # 总结表 Word 模板
+├─ scripts/
+│  ├─ build_docs.py                 # 按模板生成案例/总结表/心得 DOCX（JSON 输入）
+│  └─ render_preview.py             # DOCX → PDF → 逐页 PNG 渲染预览
 └─ references/
    ├─ generation-spec.md            # 各类材料的生成细则
+   ├─ output-format.md              # 事实核对卡、文件命名、交付报告与PPT提示词模板
    └─ layout-spec.md                # Word 模板与排版要求
 ```
 
-详细规则请参阅 [`SKILL.md`](SKILL.md)、[`references/generation-spec.md`](references/generation-spec.md) 和 [`references/layout-spec.md`](references/layout-spec.md)。两个 Word 模板属于本 Skill 的内置资源，保持原结构使用，不依赖其他项目。
+详细规则请参阅 [`SKILL.md`](SKILL.md)、[`references/generation-spec.md`](references/generation-spec.md)、[`references/output-format.md`](references/output-format.md) 和 [`references/layout-spec.md`](references/layout-spec.md)。两个 Word 模板属于本 Skill 的内置资源，保持原结构使用，不依赖其他项目。
