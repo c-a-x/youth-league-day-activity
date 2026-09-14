@@ -167,4 +167,4 @@
 - 没有混入照片、系统录入、邮箱、文件命名等材料管理话语。
 - 文件保存到约定输出目录并符合 output-format.md 的固定命名；预览版带 `-预览` 后缀。
 - 交付报告已按 output-format.md 的固定结构输出。
-- DOCX 完成页面渲染和结构检查；渲染不可用时如实说明。
+- 通过 `scripts/check_docx_format.py` 结构审计（0 错误）和 `scripts/render_preview.py` 渲染检查；任一不可用时如实说明。

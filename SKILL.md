@@ -16,7 +16,7 @@ description: Use when a user provides a college or Youth League activity notice,
 1. 读取通知正文、表格和标题，并读取本 skill 的两个内置模板；建立“已确认事实、用户授权生成字段、可合理补全内容、需要用户确认、通知/模板冲突”五类信息。
 2. 根据用户要的交付物询问最少必要信息；不要为了生成 PPT 或活动案例追问总结表专用字段。
 3. 判断文风：用户说“按已经开展写”“活动已经办完”“过程你自己编”“过程你自己合理生成”“写真实一点”等，直接使用已开展活动的过去时；只有用户明确要方案、预览或尚未开展时才使用“拟/计划/建议”。
-4. 根据通知主题和活动形式补全自然、连贯的活动过程、互动内容、讨论话题、一般活动氛围和一般性成效；不把合理补全误当成证据造假。
+4. 根据通知主题和活动形式补全自然、连贯的活动过程、互动内容、讨论话题、一般活动氛围和一般性成效；不把合理补全误当成证据造假。撰写前先查阅 [references/material-library.md](references/material-library.md) 的对应主题知识卡、环节工具箱和句式库；库中没有的主题先联网核实权威表述，再按其扩充规则补录。
 5. 活动主题、日期、地点、人数和主要流程一旦确定，案例、总结表、心得体会和 PPT 必须使用同一组信息；PPT 不得擅自改成另一种活动形式。
 6. 按 [references/output-format.md](references/output-format.md) 输出事实核对卡作为统一事实源，并按其固定规则命名文件和输出交付报告。
 7. 按 [references/generation-spec.md](references/generation-spec.md) 生成对应文件，按 [references/layout-spec.md](references/layout-spec.md) 保留模板版式并完成检查。
@@ -57,6 +57,7 @@ description: Use when a user provides a college or Youth League activity notice,
 
 - `scripts/build_docs.py`：从 `assets/` 模板生成 DOCX。子命令 `case`（活动案例）、`table`（总结表）、`reflection`（心得体会），输入 JSON 文件、`--out` 指定输出路径；脚本自动完成占位替换、模板注释行删除和固定版式（宋体四号正文、固定 25 磅行距、首行缩进两字符；总结表只填单元格不动结构）。JSON 字段用法见脚本开头 docstring。
 - `scripts/render_preview.py`：把 DOCX 转为 PDF 并逐页导出 PNG 预览（Word COM + PyMuPDF），用于交付前渲染检查；环境缺少 Word 或渲染失败时如实说明，不要声称已检查。
+- `scripts/check_docx_format.py`：对生成件做结构审计——禁留占位（[待补]/XXXX/（模板）/注释行）、章节齐全与顺序、字体字号行距缩进、总结表字段与学院团委意见空白、A4 页面；有 ERROR 必须修复后重跑，与渲染检查配合使用（先审计后渲染）。
 
 脚本运行报错或输出异常时才改用手工方式处理，并在交付说明中注明。
 
