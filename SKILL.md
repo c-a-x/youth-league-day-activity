@@ -77,4 +77,6 @@ description: Use when a user provides a college or Youth League activity notice,
 - `assets/活动案例模板.docx`
 - `assets/团日活动总结表（团支部）.docx`
 
+本 skill 还内置了完整的 PPTX 生成引擎 `ppt-master/`（迁移自开源项目 ppt-master v6.4.0，MIT License）。默认交付 PPT 提示词；用户明确要求直接生成 PPT 文件时，按 [references/generation-spec.md](references/generation-spec.md) §7.2 的 PPTX 直接生成模式执行，内容契约（大纲、事实一致性）优先于引擎默认流程。
+
 保留两个模板的结构、合并单元格、列宽、行高、附件编号和签章区域；生成副本，不覆盖原模板。案例身份行严格保留 `XX学院（全称）  XX团支部（简称）` 的两段式结构。详细章节、字段映射、心得结构、PPT 动态页数和 QA 清单见 [references/generation-spec.md](references/generation-spec.md)；字体、段落和页面规则见 [references/layout-spec.md](references/layout-spec.md)。

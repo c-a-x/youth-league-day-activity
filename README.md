@@ -85,11 +85,14 @@ youth-league-day-activity/
 │  ├─ build_docs.py                 # 按模板生成案例/总结表/心得 DOCX（JSON 输入）
 │  ├─ check_docx_format.py          # 结构审计：占位/章节/字体行距/表格字段/A4
 │  └─ render_preview.py             # DOCX → PDF → 逐页 PNG 渲染预览
+├─ ppt-master/                      # 内置 PPTX 生成引擎（迁移自开源项目 ppt-master v6.4.0，MIT License）
 └─ references/
-   ├─ generation-spec.md            # 各类材料的生成细则
+   ├─ generation-spec.md            # 各类材料的生成细则（含 PPTX 直接生成模式）
    ├─ output-format.md              # 事实核对卡、文件命名、交付报告与PPT提示词模板
    ├─ material-library.md           # 素材库：环节工具箱、句式库、主题知识卡
    └─ layout-spec.md                # Word 模板与排版要求（含要素级硬规则表、已知坑点）
 ```
+
+PPTX 引擎版权说明：`ppt-master/` 目录完整保留上游 [ppt-master](https://github.com/hugohe3/ppt-master)（v6.4.0，MIT License，Copyright (c) 2025-2026 Hugo He）的 LICENSE 与署名文件，仅随本 skill 分发使用。
 
 详细规则请参阅 [`SKILL.md`](SKILL.md)、[`references/generation-spec.md`](references/generation-spec.md)、[`references/output-format.md`](references/output-format.md) 和 [`references/layout-spec.md`](references/layout-spec.md)。两个 Word 模板属于本 Skill 的内置资源，保持原结构使用，不依赖其他项目。
