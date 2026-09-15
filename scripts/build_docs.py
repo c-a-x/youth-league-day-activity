@@ -12,7 +12,8 @@
                    "content": {"策划|准备|开展|总结|推广价值|思考与建议": ["段落", …]}}
   table.json      {"学院名称":…, "举办支部":…, "活动名称":…, "活动时间":…, "活动地点":…,
                    "支部人数":…, "参加人数":…, "活动负责人":…, "联系电话":…,
-                   "活动过程及效果":…, "备注":…}   （缺失或空值 → 单元格留空）
+                   "活动过程及效果":…}   （缺失或空值 → 单元格留空）
+                   备注栏固定留空，传入 "备注" 也不会写入。
   reflection.json {"title":…, "identity":…, "paragraphs": ["段落", …]}
 
 脚本固定做三件事，保证交付规范一致：
@@ -185,7 +186,12 @@ def build_table(json_path: str, out_path: str) -> None:
         if label.startswith("活动过程及效果"):
             target = table.cell(r, 1)
             key = "活动过程及效果"
-        elif label in ("学院名称", "举办支部", "活动名称", "备注"):
+        elif label == "备注":
+            # 备注栏固定留空：不写入材料管理信息、来源冲突或提交提醒。
+            fill_cell(table.cell(r, 1), "")
+            filled.add("备注")
+            continue
+        elif label in ("学院名称", "举办支部", "活动名称"):
             target = table.cell(r, 1)
             key = label
         elif label in ("活动时间", "支部人数", "活动负责人"):

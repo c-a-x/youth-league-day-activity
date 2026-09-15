@@ -192,9 +192,9 @@
         {
           "capability": "PPTX 直接生成",
           "trigger": "引擎目录定位失败、依赖缺失，或 attribution_guard 返回非零",
-          "fallback": "降级为提示词模式，交付 .md 格式的 PPT 提示词与页面大纲，明确标注 PPT 未生成，并写明引擎不可用的原因",
-          "user_input": "用户可提供引擎的新位置，或改用自己的工具按提示词生成",
-          "limitations": "只得到可粘贴的提示词和页面大纲，拿不到原生可编辑的 .pptx",
+          "fallback": "停止 PPT 环节，其余交付物照常产出，明确标注 PPT 未生成，并写明引擎不可用的原因",
+          "user_input": "用户可提供引擎的新位置，或按 setup-guide 恢复引擎后重试",
+          "limitations": "本批材料不含 .pptx，需恢复引擎后重新生成",
           "evidence_label": "已验证",
           "recovery": "按本文件 ppt-master-engine 的 setup 步骤恢复内置归档或设置 PPT_MASTER_DIR，重跑 check_environment.py 与 bootstrap_engine.py --verify 后再执行生成",
           "stop_condition": "引擎不可用时不得手工拼装 PPTX 冒充引擎产物，也不得修改引擎文件去绕过完整性检查"
@@ -277,9 +277,9 @@
     {
       "capability": "PPTX 直接生成",
       "trigger": "引擎目录定位失败、依赖缺失，或 attribution_guard 返回非零",
-      "fallback": "降级为提示词模式，交付 .md 格式的 PPT 提示词与页面大纲，明确标注 PPT 未生成，并写明引擎不可用的原因",
-      "user_input": "用户可提供引擎的新位置，或改用自己的工具按提示词生成",
-      "limitations": "只得到可粘贴的提示词和页面大纲，拿不到原生可编辑的 .pptx",
+      "fallback": "停止 PPT 环节，其余交付物照常产出，明确标注 PPT 未生成，并写明引擎不可用的原因",
+      "user_input": "用户可提供引擎的新位置，或按 setup-guide 恢复引擎后重试",
+      "limitations": "本批材料不含 .pptx，需恢复引擎后重新生成",
       "evidence_label": "已验证",
       "recovery": "按 references/setup-guide.md 的 ppt-master-engine 一节恢复内置归档或设置 PPT_MASTER_DIR，重跑 check_environment.py 与 bootstrap_engine.py --verify 后再执行生成",
       "stop_condition": "引擎不可用时不得手工拼装 PPTX 冒充引擎产物，也不得修改引擎文件去绕过完整性检查"

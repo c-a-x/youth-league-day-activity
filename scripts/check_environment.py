@@ -375,7 +375,7 @@ def main():
         if engine["located"]:
             print(f"PPTX 引擎：{engine['path']}（来源：{engine['source']}，版本 {engine['version'] or '未知'}，LICENSE 摘要{'一致' if engine['license_match'] else '不一致'}）")
         else:
-            print("PPTX 引擎：未定位到，退回 PPT 提示词模式")
+            print("PPTX 引擎：未定位到，PPT 无法生成；请按 setup-guide 恢复引擎")
         if status != "ready":
             print("处理方式见 references/setup-guide.md。")
 

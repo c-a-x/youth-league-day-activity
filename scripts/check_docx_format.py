@@ -8,7 +8,7 @@
   1. 禁留物扫描：[待补]、XXXX、（模板）、模板排版注释行、未替换的学院/支部占位。
   2. case：必含章节标题及其相对顺序；正文段落版式（宋体四号、固定 25 磅、首行缩进两字符）。
   3. reflection：标题三号加粗居中、身份行四号居中、正文版式同上。
-  4. table：字段标签齐全；学院团委意见栏不得填写内容；禁止占位符。
+  4. table：字段标签齐全；学院团委意见栏与备注栏均不得填写内容；禁止占位符。
   5. 页面为 A4 纵向。
 
 本脚本与活动主题完全无关：材料类型与前言区一律按结构特征判定，不匹配任何主题字面量。
@@ -163,6 +163,10 @@ def check_table(doc):
             content = norm(table.cell(r, 1).text).replace("盖章", "").replace("年月日", "")
             if content.strip():
                 err("学院团委意见栏被填写，应保留空白")
+    # 备注栏：固定留空，不得写入任何内容
+    for r in range(len(table.rows)):
+        if norm(table.cell(r, 0).text) == "备注" and norm(table.cell(r, 1).text).strip():
+            err("备注栏被填写，应固定留空")
     info("总结表字段检查完成")
 
 

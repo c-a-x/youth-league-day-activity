@@ -11,7 +11,7 @@
 | `python-docx` | 运行时库 | 是 | 生成 Word 材料、结构审计 | 无法生成 DOCX，也无法审计版式 |
 | `ms-word-com` | 本机工具 | 否 | 渲染预览 | 拿不到逐页 PNG，只能人工目视 |
 | `pymupdf` | 运行时库 | 否 | 渲染预览 | PDF 无法转成逐页 PNG |
-| `ppt-master-engine` | 内置归档 | 需 PPT 时必需 | 生成 PPTX | 降级交付 PPT 提示词，并标注 PPT 未生成 |
+| `ppt-master-engine` | 内置归档 | 需 PPT 时必需 | 生成 PPTX | 停止 PPT 环节，标注 PPT 未生成 |
 | `internet-access` | 网络 | 否 | 主题事实核实 | 只用通知给出的主题表述 |
 
 必需项缺失时，本 skill 仍可交付 Markdown 正文，但不得声称已生成 DOCX 或已通过版式检查。
@@ -138,7 +138,7 @@ python scripts/bootstrap_engine.py --json           # 输出机器可读结果�
 | `python-docx` | 交付 Markdown 正文；人工核对占位与章节 | 标「未生成 DOCX」「版式未验证」 |
 | `ms-word-com` | 结构审计 + OOXML 检查；有 PDF 就保留 | 标「未做渲染检查」 |
 | `pymupdf` | 保留 PDF 供人工翻页 | 标「未逐页检查」 |
-| `ppt-master-engine` | 改到非 C 盘指定缓存目录重试自举；归档缺失或摘要不符时，交付 PPT 提示词与页面大纲（.md） | 标「引擎不可用，PPT 未生成」 |
+| `ppt-master-engine` | 改到非 C 盘指定缓存目录重试自举；归档缺失或摘要不符时，停止 PPT 环节，其余交付物照常产出 | 标「PPT 未生成」 |
 | `internet-access` | 只用通知与素材库已有表述 | 标「主题表述未联网核实」 |
 
 核心正确性无法保障时停止操作，不用推测或编造填补缺失环节；降级结果一律标注限制和验证状态。
