@@ -5,7 +5,8 @@
 - 活动案例；
 - 团支部活动总结表；
 - 心得体会或读后感；
-- PPT 生成提示词和页面大纲。
+- PPTX 文件（调用内置的 ppt-master 引擎直接产出，无需另装工具）。
+- PPT 生成提示词和页面大纲（仅在引擎不可用时作为降级交付）。
 
 ## 适用场景
 
@@ -49,6 +50,14 @@ Skill 可以围绕通知主题合理补全主持开场、理论学习、材料�
 
 活动主题、日期、地点、人数和主要活动流程一旦确定，所有材料必须使用同一组信息。PPT 不能擅自把案例中的知识问答改成主题辩论，也不能凭空增加通知没有要求的活动环节。
 
+### 与活动主题无关
+
+本 Skill 用于各种主题，规则、脚本和模板都不绑定任何具体活动主题：
+
+- 材料类型、案例主标题、身份行的识别与定位一律按结构特征判断，换主题不需要改脚本；
+- 活动主题、口号和年度主题只有一个来源——用户当前提供的通知或用户明确给出的表述；
+- `references/material-library.md` 的知识卡只是写作参考，不是事实来源；遇到库里没有的主题，先核实权威表述再写，无法核实就只用通知给出的表述并如实说明。
+
 ### 材料管理信息不写入正文
 
 照片、邮箱、智慧团建、截止时间、文件命名和其他提交要求只作为备注或核对信息处理，默认不写入活动案例正文、心得正文和 PPT 正文。本 Skill 也不负责照片生成、照片处理、系统录入或材料上传。
@@ -58,7 +67,7 @@ Skill 可以围绕通知主题合理补全主持开场、理论学习、材料�
 - 活动案例：未指定时按约 1800—2800 字生成，沿用模板章节：活动策划、组织实施、活动总结、案例点评；
 - 总结表：继续使用现有 Word 模板，不重新设计表格；
 - 心得体会或读后感：未指定时按约 800—1200 字，以自然的第一人称撰写；
-- PPT 提示词：未指定页数时默认 10—12 页，根据通知主题动态设计，不机械套用固定环节。
+- PPT：调用 ppt-master 引擎直接生成 `.pptx`；未指定页数时默认 10—12 页，根据通知主题动态设计，不机械套用固定环节。
 
 正式材料中不使用 `[待补]`。缺失信息可以在独立的核对清单中提醒，预览版总结表的未知字段保持空白。
 
@@ -67,15 +76,37 @@ Skill 可以围绕通知主题合理补全主持开场、理论学习、材料�
 每次生成的对外输出遵循统一格式（详见 `references/output-format.md`）：
 
 1. 成稿前先输出**事实核对卡**（主题、学院/支部、日期口径、地点、人数、文风口径、篇幅口径、交付物清单），作为所有材料的统一事实源；
-2. 文件统一保存到 `团日活动材料/` 目录，按 `材料类型-{支部简称}-{YYYYMMDD}` 命名，预览版加 `-预览` 后缀；
+2. 文件统一保存到 **`E:\cc项目\团日活动材料\`**（本 Skill 根目录同级），全部产出含模板副本、内部中间目录和 PPT 生成项目目录。两条红线：不得落在 **Skill 目录内部**（会污染包体），不得落在 **C 盘**（含系统临时目录）。用户指定目录时以用户目录为准，同样受这两条约束。按 `材料类型-{支部简称}-{YYYYMMDD}` 命名，预览版加 `-预览` 后缀；
 3. 交付后输出固定结构的**交付报告**：交付清单、事实核对（主题、日期口径、地点、人数、主要流程）、QA 结果和待确认事项；
 4. 用户或通知明确指定命名、目录或输出形式时，以用户或通知为准。
+
+## 环境依赖
+
+生成前先跑一次环境检查，确认依赖是否齐全：
+
+```bash
+python scripts/check_environment.py
+```
+
+输出 `ready` / `partial` / `needs_setup` 三态。脚本只读，不安装依赖、不写配置、不联网。
+
+| 依赖 | 必需 | 用途 |
+|---|---|---|
+| Python 3.9+ 与 python-docx | 是 | 生成与审计 DOCX |
+| Windows 桌面版 Word + pywin32 | 否 | 渲染逐页预览 |
+| PyMuPDF | 否 | PDF 转逐页 PNG |
+| ppt-master 引擎 | 需 PPT 时必需 | 生成 PPTX（内置归档，首次自动解压） |
+| 联网核实能力 | 否 | 核实素材库以外的主题表述 |
+
+要用**装有 python-docx 的那个 Python** 运行本 Skill 的全部脚本。完整安装步骤、验证方式与缺失时的降级路径见 [`references/setup-guide.md`](references/setup-guide.md)，依赖清单位于 [`skill-dependencies.json`](skill-dependencies.json)。
 
 ## 目录结构
 
 ```text
 youth-league-day-activity/
 ├─ SKILL.md                         # Skill 主规则
+├─ README.md                        # 本文件
+├─ skill-dependencies.json          # 依赖清单与功能降级矩阵
 ├─ agents/
 │  └─ openai.yaml                   # Skill 展示信息与默认提示词
 ├─ assets/
@@ -84,15 +115,20 @@ youth-league-day-activity/
 ├─ scripts/
 │  ├─ build_docs.py                 # 按模板生成案例/总结表/心得 DOCX（JSON 输入）
 │  ├─ check_docx_format.py          # 结构审计：占位/章节/字体行距/表格字段/A4
+│  ├─ check_environment.py          # 依赖环境检查（只读，输出三态）
+│  ├─ bootstrap_engine.py           # 从 vendor/ 归档校验摘要后解压 PPTX 引擎并复用缓存
 │  └─ render_preview.py             # DOCX → PDF → 逐页 PNG 渲染预览
-├─ ppt-master/                      # 内置 PPTX 生成引擎（迁移自开源项目 ppt-master v6.4.0，MIT License）
+├─ vendor/
+│  ├─ ppt-master-6.4.0.zip          # 内置的 PPTX 引擎精简归档（10.28 MB）
+│  └─ ppt-master-6.4.0.manifest.json # 归档摘要、文件数与裁剪说明
 └─ references/
-   ├─ generation-spec.md            # 各类材料的生成细则（含 PPTX 直接生成模式）
-   ├─ output-format.md              # 事实核对卡、文件命名、交付报告与PPT提示词模板
+   ├─ generation-spec.md            # 各类材料的生成细则（含 PPT 引擎生成与降级路径）
+   ├─ output-format.md              # 事实核对卡、文件命名、交付报告与降级提示词模板
    ├─ material-library.md           # 素材库：环节工具箱、句式库、主题知识卡
-   └─ layout-spec.md                # Word 模板与排版要求（含要素级硬规则表、已知坑点）
+   ├─ layout-spec.md                # Word 模板与排版要求（含要素级硬规则表、已知坑点）
+   └─ setup-guide.md                # 依赖安装、验证与降级指南
 ```
 
-PPTX 引擎版权说明：`ppt-master/` 目录完整保留上游 [ppt-master](https://github.com/hugohe3/ppt-master)（v6.4.0，MIT License，Copyright (c) 2025-2026 Hugo He）的 LICENSE 与署名文件，仅随本 skill 分发使用。
+PPTX 引擎说明：本 Skill 内置 [ppt-master](https://github.com/hugohe3/ppt-master) v6.4.0 的精简归档（MIT License，Copyright (c) 2025-2026 Hugo He）。归档相对上游裁去 `references/ai-image-comparison/`（AI 生图风格参考图）、`templates/sounds/*.wav`（语音旁白音效）与 `templates/brands/`（企业品牌素材）三类与本 Skill 无关的素材，合计 58.72 MB；全部图标库、模板构件、脚本与文档完整保留，裁剪不影响 PPT 生成主流程。首次生成 PPT 时由 `scripts/bootstrap_engine.py` 校验归档 SHA-256 后解压到 Skill 之外的项目目录并复用，不落 C 盘。想让本 Skill 改用外部引擎时设置环境变量 `PPT_MASTER_DIR`，定位顺序见 [`references/generation-spec.md`](references/generation-spec.md) §7.1。引擎内的文件不得修改——其完整性守卫会校验 LICENSE 摘要、SKILL.md 身份字段与门禁标记、入口脚本的调用结构。
 
 详细规则请参阅 [`SKILL.md`](SKILL.md)、[`references/generation-spec.md`](references/generation-spec.md)、[`references/output-format.md`](references/output-format.md) 和 [`references/layout-spec.md`](references/layout-spec.md)。两个 Word 模板属于本 Skill 的内置资源，保持原结构使用，不依赖其他项目。

@@ -1,0 +1,298 @@
+{
+  "schema_version": "1",
+  "capabilities": [
+    "生成 Word 材料（案例/总结表/心得）",
+    "结构审计（占位/章节/版式）",
+    "渲染预览（DOCX 转 PDF 与逐页 PNG）",
+    "PPTX 直接生成",
+    "主题事实联网核实"
+  ],
+  "dependencies": [
+    {
+      "id": "python-docx",
+      "type": "runtime",
+      "required": true,
+      "auth_type": "none",
+      "capabilities": [
+        "生成 Word 材料（案例/总结表/心得）",
+        "结构审计（占位/章节/版式）"
+      ],
+      "checks": [
+        {
+          "id": "python-version",
+          "type": "python",
+          "required": true
+        },
+        {
+          "id": "docx-import",
+          "type": "python",
+          "required": true
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://python-docx.readthedocs.io/",
+        "official_docs_url": "https://python-docx.readthedocs.io/en/latest/",
+        "steps": [
+          "确认本机 Python 版本不低于 3.9：python --version",
+          "安装文档库：python -m pip install python-docx",
+          "在本 skill 目录运行：python scripts/check_environment.py"
+        ],
+        "verify": "check_environment.py 里 python-docx 一项显示 OK，代表 import docx 成功。",
+        "security": "python-docx 是纯本地文档库，不联网、不需要凭据；只从官方文档给出的 PyPI 渠道安装，不使用来路不明的 whl 包。",
+        "verified_at": "2026-09-15",
+        "applies_to_version": "python-docx 1.1 及以上"
+      },
+      "degradation": [
+        {
+          "capability": "生成 Word 材料（案例/总结表/心得）",
+          "trigger": "import docx 失败，或解释器版本低于 3.9",
+          "fallback": "停止脚本生成，改为交付结构完整的 Markdown 正文，并写明未生成 DOCX 的原因",
+          "user_input": "",
+          "limitations": "Markdown 不含模板版式、表格结构与固定字号，需要用户自行在 Word 中套用 assets/ 模板",
+          "evidence_label": "未验证",
+          "recovery": "按本文件 python-docx 一节安装依赖后重跑 check_environment.py，通过后重新生成 DOCX",
+          "stop_condition": "用户坚持只要 DOCX 且拒绝安装依赖时，停止并如实说明，不得用改后缀等方式冒充 DOCX"
+        },
+        {
+          "capability": "结构审计（占位/章节/版式）",
+          "trigger": "import docx 失败，审计脚本无法读取 DOCX",
+          "fallback": "改为人工核对清单：逐项检查占位残留、章节齐全、身份行与关键字段是否为空",
+          "user_input": "",
+          "limitations": "人工核对无法逐 run 校验字体、字号、行距与缩进，版式结论只能标为未验证",
+          "evidence_label": "未验证",
+          "recovery": "安装 python-docx 后重跑 check_docx_format.py，用脚本结论覆盖人工结论",
+          "stop_condition": "没有任何审计手段时，不得在交付报告里写「版式检查通过」"
+        }
+      ]
+    },
+    {
+      "id": "ms-word-com",
+      "type": "local-tool",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": [
+        "渲染预览（DOCX 转 PDF 与逐页 PNG）"
+      ],
+      "checks": [
+        {
+          "id": "word-com",
+          "type": "python",
+          "required": false
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://www.microsoft.com/microsoft-365/word",
+        "official_docs_url": "https://learn.microsoft.com/en-us/office/vba/api/overview/word",
+        "steps": [
+          "确认本机为 Windows 且装有桌面版 Microsoft Word（Microsoft 365 或 Word 2019 及以上）",
+          "安装 COM 绑定库：python -m pip install pywin32",
+          "运行 python scripts/check_environment.py 看 Word COM 一项；需要真机验证时加 --probe-word"
+        ],
+        "verify": "check_environment.py 能读到 Word.Application 的注册版本；加 --probe-word 时能启动 Word 并读出版本号后正常退出。",
+        "security": "脚本只以只读方式打开 DOCX 并另存为 PDF，不修改源文件、不启用宏、不打开文档中的外部链接；探测结束后立即退出 Word 进程。",
+        "verified_at": "2026-09-15",
+        "applies_to_version": "Microsoft Word 2016 及以上（Windows）"
+      },
+      "degradation": [
+        {
+          "capability": "渲染预览（DOCX 转 PDF 与逐页 PNG）",
+          "trigger": "非 Windows 环境、未装桌面版 Word，或 pywin32 不可用",
+          "fallback": "跳过渲染，改为结构审计加 OOXML 检查，并在交付报告里写明「未做渲染检查」",
+          "user_input": "用户可自行打开 DOCX 目视确认，或提供已安装 Word 的机器复检",
+          "limitations": "拿不到逐页 PNG，字体替换、分页孤行、表格溢出和大面积空白只能由用户目视确认",
+          "evidence_label": "部分验证",
+          "recovery": "在装有桌面版 Word 的 Windows 机器上重跑 render_preview.py",
+          "stop_condition": "渲染未执行时不得声称「已渲染检查」"
+        }
+      ]
+    },
+    {
+      "id": "pymupdf",
+      "type": "runtime",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": [
+        "渲染预览（DOCX 转 PDF 与逐页 PNG）"
+      ],
+      "checks": [
+        {
+          "id": "pymupdf-import",
+          "type": "python",
+          "required": false
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://pymupdf.readthedocs.io/",
+        "official_docs_url": "https://pymupdf.readthedocs.io/en/latest/",
+        "steps": [
+          "安装：python -m pip install pymupdf",
+          "验证导入：python -c \"import fitz; print(fitz.__doc__)\"",
+          "运行 python scripts/check_environment.py 看 PyMuPDF 一项"
+        ],
+        "verify": "import fitz 成功，check_environment.py 里 PyMuPDF 一项显示 OK。",
+        "security": "PyMuPDF 只在本地打开 PDF 并导出 PNG，不上传文件、不联网、不需要凭据。",
+        "verified_at": "2026-09-15",
+        "applies_to_version": "PyMuPDF 1.24 及以上"
+      },
+      "degradation": [
+        {
+          "capability": "渲染预览（DOCX 转 PDF 与逐页 PNG）",
+          "trigger": "import fitz 失败，PDF 无法转成逐页 PNG",
+          "fallback": "保留 render_preview.py 生成的 PDF 供用户翻页查看，跳过 PNG 导出",
+          "user_input": "用户可自行用 PDF 阅读器逐页确认版式",
+          "limitations": "没有逐页 PNG，自动化逐页检查无法进行，只能人工目视",
+          "evidence_label": "部分验证",
+          "recovery": "安装 pymupdf 后重跑 render_preview.py 补齐 PNG",
+          "stop_condition": "PNG 未生成时不得声称「已逐页检查」"
+        }
+      ]
+    },
+    {
+      "id": "ppt-master-engine",
+      "type": "local-tool",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": [
+        "PPTX 直接生成"
+      ],
+      "checks": [
+        {
+          "id": "engine-resolve",
+          "type": "python",
+          "required": false
+        },
+        {
+          "id": "engine-archive",
+          "type": "file",
+          "required": false,
+          "path": "vendor/ppt-master-6.4.0.zip"
+        },
+        {
+          "id": "engine-env",
+          "type": "env",
+          "required": false,
+          "name": "PPT_MASTER_DIR"
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://github.com/hugohe3/ppt-master",
+        "official_docs_url": "https://github.com/hugohe3/ppt-master#readme",
+        "steps": [
+          "无需安装：引擎以精简归档内置在 vendor/ppt-master-6.4.0.zip，首次生成 PPT 时由 scripts/bootstrap_engine.py 校验摘要后自动解压到缓存目录并复用",
+          "想改用外部引擎（例如本机的完整上游克隆）时，设置环境变量 PPT_MASTER_DIR 指向该引擎目录即可，内置归档不再使用",
+          "指定解压位置：设置 PPT_MASTER_CACHE_DIR，或运行 bootstrap_engine.py --cache-dir <目录>；候选目录全部落在 C 盘时脚本会拒绝执行",
+          "运行 python scripts/check_environment.py，确认 PPTX 引擎一项为 OK 且 LICENSE 摘要通过校验"
+        ],
+        "verify": "check_environment.py 报告引擎就绪或内置归档完整；bootstrap_engine.py --verify 解压后运行引擎自带守卫，退出码为 0。",
+        "security": "引擎目录内的文件不得修改：其 attribution_guard 会校验 LICENSE 摘要、SKILL.md 身份字段与门禁标记、入口脚本的调用结构，任何改动都会阻断整条 PPTX 路线。本 skill 只读 vendor/ 归档、只写缓存目录，不删除任何文件。",
+        "verified_at": "2026-09-15",
+        "applies_to_version": "ppt-master 6.4.0"
+      },
+      "degradation": [
+        {
+          "capability": "PPTX 直接生成",
+          "trigger": "引擎目录定位失败、依赖缺失，或 attribution_guard 返回非零",
+          "fallback": "降级为提示词模式，交付 .md 格式的 PPT 提示词与页面大纲，明确标注 PPT 未生成，并写明引擎不可用的原因",
+          "user_input": "用户可提供引擎的新位置，或改用自己的工具按提示词生成",
+          "limitations": "只得到可粘贴的提示词和页面大纲，拿不到原生可编辑的 .pptx",
+          "evidence_label": "已验证",
+          "recovery": "按本文件 ppt-master-engine 的 setup 步骤恢复内置归档或设置 PPT_MASTER_DIR，重跑 check_environment.py 与 bootstrap_engine.py --verify 后再执行生成",
+          "stop_condition": "引擎不可用时不得手工拼装 PPTX 冒充引擎产物，也不得修改引擎文件去绕过完整性检查"
+        }
+      ]
+    },
+    {
+      "id": "internet-access",
+      "type": "network",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": [
+        "主题事实联网核实"
+      ],
+      "checks": [
+        {
+          "id": "stdlib-net",
+          "type": "python",
+          "required": false
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://www.gov.cn/",
+        "official_docs_url": "https://www.moe.gov.cn/",
+        "steps": [
+          "无需安装：本 skill 不内置任何网络请求脚本",
+          "遇到素材库没有的主题时，由调用方用自身的联网检索能力查阅官方来源",
+          "用权威来源交叉确认后再写入材料，无法核实的表述一律不用"
+        ],
+        "verify": "生成材料时，凡素材库知识卡以外的年度主题、口号和统计数据都能追溯到官方来源；追溯不到的不写。",
+        "security": "检索只用于读取公开的权威表述，不向第三方发送通知原文、活动材料或个人数据；不需要任何账号或密钥。",
+        "verified_at": "2026-09-15",
+        "applies_to_version": "不限"
+      },
+      "degradation": [
+        {
+          "capability": "主题事实联网核实",
+          "trigger": "本机无网络、检索不可用，或主题无法在权威来源中核实",
+          "fallback": "只用通知给出的主题表述写作，素材库知识卡以外的年度主题、口号、统计数据一律不引入",
+          "user_input": "用户可补充主题的官方全称、口号或来源链接，补充后按用户提供的内容写",
+          "limitations": "材料只能使用通知与素材库已有内容，无法补充当年最新主题或新提法",
+          "evidence_label": "未验证",
+          "recovery": "恢复网络后按素材库扩充规则核实并补录知识卡，再更新材料",
+          "stop_condition": "无法核实又必须写主题表述时，停下来问用户，不得凭印象编造主题全称或口号"
+        }
+      ]
+    }
+  ],
+  "functional_degradations": [
+    {
+      "capability": "生成 Word 材料（案例/总结表/心得）",
+      "trigger": "import docx 失败，或解释器版本低于 3.9",
+      "fallback": "停止脚本生成，改为交付结构完整的 Markdown 正文，并写明未生成 DOCX 的原因",
+      "user_input": "",
+      "limitations": "Markdown 不含模板版式、表格结构与固定字号，需要用户自行在 Word 中套用 assets/ 模板",
+      "evidence_label": "未验证",
+      "recovery": "按 references/setup-guide.md 安装 python-docx 后重跑 check_environment.py，通过后重新生成 DOCX",
+      "stop_condition": "用户坚持只要 DOCX 且拒绝安装依赖时，停止并如实说明，不得用改后缀等方式冒充 DOCX"
+    },
+    {
+      "capability": "结构审计（占位/章节/版式）",
+      "trigger": "import docx 失败，审计脚本无法读取 DOCX",
+      "fallback": "改为人工核对清单：逐项检查占位残留、章节齐全、身份行与关键字段是否为空",
+      "user_input": "",
+      "limitations": "人工核对无法逐 run 校验字体、字号、行距与缩进，版式结论只能标为未验证",
+      "evidence_label": "未验证",
+      "recovery": "安装 python-docx 后重跑 check_docx_format.py，用脚本结论覆盖人工结论",
+      "stop_condition": "没有任何审计手段时，不得在交付报告里写「版式检查通过」"
+    },
+    {
+      "capability": "渲染预览（DOCX 转 PDF 与逐页 PNG）",
+      "trigger": "非 Windows 环境、未装桌面版 Word、pywin32 不可用，或 PyMuPDF 缺失",
+      "fallback": "降级为结构审计加 OOXML 检查，能出 PDF 时保留 PDF，无法出 PNG 时跳过；交付报告写明「未做渲染检查」",
+      "user_input": "用户可自行打开 DOCX 目视确认，或提供已安装 Word 的机器复检",
+      "limitations": "字体替换、分页孤行、表格溢出和大面积空白只能由用户目视确认",
+      "evidence_label": "部分验证",
+      "recovery": "在装有桌面版 Word 的 Windows 机器上补装 pywin32 与 pymupdf，重跑 render_preview.py",
+      "stop_condition": "渲染未执行时不得声称「已渲染检查」"
+    },
+    {
+      "capability": "PPTX 直接生成",
+      "trigger": "引擎目录定位失败、依赖缺失，或 attribution_guard 返回非零",
+      "fallback": "降级为提示词模式，交付 .md 格式的 PPT 提示词与页面大纲，明确标注 PPT 未生成，并写明引擎不可用的原因",
+      "user_input": "用户可提供引擎的新位置，或改用自己的工具按提示词生成",
+      "limitations": "只得到可粘贴的提示词和页面大纲，拿不到原生可编辑的 .pptx",
+      "evidence_label": "已验证",
+      "recovery": "按 references/setup-guide.md 的 ppt-master-engine 一节恢复内置归档或设置 PPT_MASTER_DIR，重跑 check_environment.py 与 bootstrap_engine.py --verify 后再执行生成",
+      "stop_condition": "引擎不可用时不得手工拼装 PPTX 冒充引擎产物，也不得修改引擎文件去绕过完整性检查"
+    },
+    {
+      "capability": "主题事实联网核实",
+      "trigger": "本机无网络、检索不可用，或主题无法在权威来源中核实",
+      "fallback": "只用通知给出的主题表述写作，素材库知识卡以外的年度主题、口号、统计数据一律不引入",
+      "user_input": "用户可补充主题的官方全称、口号或来源链接，补充后按用户提供的内容写",
+      "limitations": "材料只能使用通知与素材库已有内容，无法补充当年最新主题或新提法",
+      "evidence_label": "未验证",
+      "recovery": "恢复网络后按素材库扩充规则核实并补录知识卡，再更新材料",
+      "stop_condition": "无法核实又必须写主题表述时，停下来问用户，不得凭印象编造主题全称或口号"
+    }
+  ]
+}

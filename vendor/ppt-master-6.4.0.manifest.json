@@ -1,0 +1,18 @@
+{
+  "name": "ppt-master engine archive",
+  "version": "6.4.0",
+  "upstream": "https://github.com/hugohe3/ppt-master",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025-2026 Hugo He",
+  "archive": "vendor/ppt-master-6.4.0.zip",
+  "archive_sha256": "443dcd9ef5b9bcbb0a9e5260314b6fe44db3b1ef68e0e8fed63487542178d5dc",
+  "file_count": 12698,
+  "licence_sha256": "80cefc234c1ec12a8cece4344f16300c634fa03df7891686fcf979e3828f0921",
+  "trimmed": [
+    "references/ai-image-comparison/ (AI 生图风格参考图，需 API Key) — 55 个文件 / 43.18 MB",
+    "templates/brands/ (企业品牌素材，与本 skill 无关) — 44 个文件 / 3.74 MB",
+    "templates/sounds/*.wav (语音旁白音效，需 API Key) — 186 个文件 / 11.80 MB"
+  ],
+  "bootstrap": "scripts/bootstrap_engine.py",
+  "note": "归档解压后与上游 v6.4.0 除下列裁剪项外逐字节一致；版权守卫 attribution_guard.py 通过。"
+}

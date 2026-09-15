@@ -1,5 +1,4 @@
 interface:
   display_name: "团日活动材料生成"
-  short_description: "根据团日活动通知生成案例、总结表、心得和PPT材料"
-  default_prompt: "Use $youth-league-day-activity to根据我提供的团日活动通知和基本信息，合理补全活动过程，并生成我需要的规范团日活动材料。"
-
+  short_description: "根据团日活动通知生成案例、总结表、心得和配套 PPT"
+  default_prompt: "根据我提供的团日活动通知和基本信息，合理补全活动过程，生成我需要的规范团日活动材料。"

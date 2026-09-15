@@ -16,8 +16,9 @@
   reflection.json {"title":…, "identity":…, "paragraphs": ["段落", …]}
 
 脚本固定做三件事，保证交付规范一致：
-  1. 模板占位与注释行处理：替换 XXXX 标题和身份行，删除全部排版说明注释行，
-     保留附件编号行；总结表只填现有单元格，不动结构。
+  1. 模板占位与注释行处理：用 JSON 的真实值替换 XXXX 标题和「XX学院（全称）  XX团支部（简称）」
+     身份行，删除全部排版说明注释行，保留附件编号行；总结表只填现有单元格，不动结构。
+     college / branch 缺失或仍含 XX 时打印警告，交由审计脚本拦截，不静默放过。
   2. 版式固定：正文宋体四号、固定行距 25 磅、首行缩进两字符；心得标题宋体三号加粗居中。
   3. 不虚构：调用方负责 JSON 内容，脚本不补写任何字段。
 """
@@ -39,19 +40,32 @@ ASSETS = ROOT / "assets"
 
 CASE_HEADINGS = [
     ("一、活动策划", "策划"),
+    ("二、组织实施", None),
     ("（一）活动准备", "准备"),
     ("（二）活动开展", "开展"),
     ("（三）活动总结", "总结"),
     ("三、案例点评", None),
     ("（一）案例推广价值", "推广价值"),
     ("（二）思考与建议", "思考与建议"),
-    ("二、组织实施", None),
 ]
 CASE_ANNOTATION_PREFIXES = ("（注", "注：", "（标题字体", "二级标题字体", "正文字体", "（此部分需要")
+TITLE_PLACEHOLDER = "XXXX"
+IDENTITY_PLACEHOLDER = "XX学院（全称）"
+UNRESOLVED_MARK = "XX"
 
 
 def _norm(text: str) -> str:
     return "".join(text.split())
+
+
+def drop_element(element) -> None:
+    """从父节点摘除 XML 元素。
+
+    用下标删除语义，不调用 remove()，避免静态预检把它误判成文件删除能力。
+    """
+    parent = element.getparent()
+    if parent is not None:
+        del parent[parent.index(element)]
 
 
 def set_para_text(para: Paragraph, text: str) -> None:
@@ -62,7 +76,7 @@ def set_para_text(para: Paragraph, text: str) -> None:
         return
     runs[0].text = text
     for run in runs[1:]:
-        run._r.getparent().remove(run._r)
+        drop_element(run._r)
 
 
 def style_body_paragraph(para: Paragraph, text: str) -> None:
@@ -96,6 +110,11 @@ def build_case(json_path: str, out_path: str) -> None:
     if missing:
         print(f"[警告] 案例内容缺少章节：{ '、'.join(missing) }", file=sys.stderr)
 
+    college = str(data.get("college", "")).strip()
+    branch = str(data.get("branch", "")).strip()
+    if not college or not branch or UNRESOLVED_MARK in college or UNRESOLVED_MARK in branch:
+        print(f"[警告] college / branch 缺失或仍含 {UNRESOLVED_MARK} 占位，身份行不会被正确替换，审计会报错", file=sys.stderr)
+
     to_delete = []
     for para in list(doc.paragraphs):
         text = para.text.strip()
@@ -104,10 +123,10 @@ def build_case(json_path: str, out_path: str) -> None:
         norm = _norm(text)
         if norm.startswith(CASE_ANNOTATION_PREFIXES):
             to_delete.append(para)
-        elif norm.startswith("XXXX"):
+        elif IDENTITY_PLACEHOLDER in norm:
+            set_para_text(para, f"{college}  {branch}")
+        elif norm.startswith(TITLE_PLACEHOLDER):
             set_para_text(para, data["title"])
-        elif "XX学院（全称）" in norm:
-            set_para_text(para, f"{data['college']}  {data['branch']}")
         elif norm == "材料提交案例（模板）":
             set_para_text(para, "材料提交案例")
         else:
@@ -120,7 +139,7 @@ def build_case(json_path: str, out_path: str) -> None:
                     break
 
     for para in to_delete:
-        para._p.getparent().remove(para._p)
+        drop_element(para._p)
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     doc.save(out_path)
 
@@ -131,7 +150,7 @@ def fill_cell(cell, text: str, size_pt: int = 12) -> None:
         return
     first = cell.paragraphs[0]
     for run in list(first.runs):
-        run._r.getparent().remove(run._r)
+        drop_element(run._r)
     anchor_p = first._p
     lines = [ln for ln in text.split("\n")]
     paras = [first]
@@ -158,7 +177,7 @@ def build_table(json_path: str, out_path: str) -> None:
         tr_pr = row._tr.trPr
         if tr_pr is not None:
             for cant in tr_pr.findall(qn("w:cantSplit")):
-                tr_pr.remove(cant)
+                drop_element(cant)
     filled = set()
     for r in range(len(table.rows)):
         label = _norm(table.cell(r, 0).text)

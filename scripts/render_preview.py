@@ -8,13 +8,12 @@
   python render_preview.py 文件1.docx 文件2.docx [--outdir 输出目录] [--dpi 110]
 
 输出：<outdir>/<文件名>_pageNN.png（同时保留同名 PDF），并打印 JSON 清单。
+PDF 与 PNG 一律直接写入输出目录，不使用系统临时目录，也不产生需要清理的中间文件。
 渲染失败时以非零码退出并说明原因，调用方应如实告知用户，不得声称已检查。
 """
 import argparse
 import json
-import shutil
 import sys
-import tempfile
 from pathlib import Path
 
 
@@ -33,7 +32,6 @@ def main() -> int:
 
     outdir = Path(args.outdir) if args.outdir else Path(args.docx[0]).parent / "_preview"
     outdir.mkdir(parents=True, exist_ok=True)
-    tmp = Path(tempfile.mkdtemp(prefix="docx2pdf_"))
 
     try:
         import pythoncom
@@ -49,14 +47,12 @@ def main() -> int:
     results = {}
     try:
         for src in map(Path, args.docx):
-            pdf_tmp = tmp / (src.stem + ".pdf")
+            pdf_out = outdir / (src.stem + ".pdf")
             doc = word.Documents.Open(str(src.resolve()), ReadOnly=True)
             try:
-                doc.SaveAs2(str(pdf_tmp.resolve()), FileFormat=17)  # wdFormatPDF
+                doc.SaveAs2(str(pdf_out.resolve()), FileFormat=17)  # wdFormatPDF
             finally:
                 doc.Close(False)
-            pdf_out = outdir / (src.stem + ".pdf")
-            shutil.copy(pdf_tmp, pdf_out)
             pages = []
             with fitz.open(pdf_out) as pdf_doc:
                 for i, page in enumerate(pdf_doc, start=1):

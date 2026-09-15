@@ -5,11 +5,13 @@
   python check_docx_format.py 文件1.docx 文件2.docx [--kind case|table|reflection|auto]
 
 检查内容：
-  1. 禁留物扫描：[待补]、XXXX、（模板）、模板排版注释行、未替换的「XX学院（全称）」占位。
+  1. 禁留物扫描：[待补]、XXXX、（模板）、模板排版注释行、未替换的学院/支部占位。
   2. case：必含章节标题及其相对顺序；正文段落版式（宋体四号、固定 25 磅、首行缩进两字符）。
   3. reflection：标题三号加粗居中、身份行四号居中、正文版式同上。
   4. table：字段标签齐全；学院团委意见栏不得填写内容；禁止占位符。
   5. 页面为 A4 纵向。
+
+本脚本与活动主题完全无关：材料类型与前言区一律按结构特征判定，不匹配任何主题字面量。
 输出 ERROR/WARN/INFO 分级报告；存在 ERROR 时退出码为 1。渲染检查另由 render_preview.py 负责。
 """
 import argparse
@@ -18,8 +20,9 @@ from pathlib import Path
 
 from docx import Document
 from docx.oxml.ns import qn
+from docx.shared import Pt
 
-FORBIDDEN = ["[待补]", "XXXX", "（模板）", "注：一级标题", "（注：", "（标题字体", "（此部分需要", "XX学院（全称）"]
+FORBIDDEN = ["[待补]", "XXXX", "（模板）", "注：一级标题", "（注：", "（标题字体", "（此部分需要", "XX学院（全称）", "XX团支部"]
 CASE_HEADINGS = ["一、活动策划", "二、组织实施", "（一）活动准备", "（二）活动开展", "（三）活动总结", "三、案例点评", "（一）案例推广价值", "（二）思考与建议"]
 TABLE_LABELS = ["学院名称", "举办支部", "活动名称", "活动时间", "活动地点", "支部人数", "参加人数", "活动负责人", "联系电话", "备注"]
 
@@ -38,18 +41,22 @@ def norm(text: str) -> str:
 
 
 def detect_kind(doc) -> str:
+    """按结构特征识别材料类型，不依赖标题里的主题字面量。"""
     texts = [norm(p.text) for p in doc.paragraphs]
-    if any("主题团日活动案例" in t for t in texts):
+    if "材料提交案例" in texts or sum(1 for h in CASE_HEADINGS if norm(h) in texts) >= 2:
         return "case"
-    if doc.tables and any(norm("活动过程及效果").startswith(norm(c.text)[:4]) for c in doc.tables[0].column_cells(0) if c.text):
-        return "table"
+    if doc.tables:
+        labels = {norm(c.text) for row in doc.tables[0].rows for c in row.cells}
+        if sum(1 for label in TABLE_LABELS if any(t.startswith(label) for t in labels)) >= 3:
+            return "table"
     return "reflection"
 
 
 def check_forbidden(all_text: str) -> None:
     for token in FORBIDDEN:
-        if token in all_text:
-            err(f"发现禁留占位/注释：{token}")
+        count = all_text.count(token)
+        if count:
+            err(f"发现禁留占位/注释：{token}（{count} 处）")
 
 
 def check_run_font(para, expect_size_pt, label, expect_bold=None, check_indent=False):
@@ -58,7 +65,7 @@ def check_run_font(para, expect_size_pt, label, expect_bold=None, check_indent=F
     if not text:
         return
     pf = para.paragraph_format
-    if pf.line_spacing is None or pf.line_spacing_rule is None or pf.line_spacing != __import__("docx").shared.Pt(25):
+    if pf.line_spacing is None or pf.line_spacing_rule is None or pf.line_spacing != Pt(25):
         err(f"{label}「{text[:12]}…」行距不是固定 25 磅")
     if check_indent:
         ind = para._p.pPr.find(qn("w:ind")) if para._p.pPr is not None else None
@@ -78,7 +85,20 @@ def check_run_font(para, expect_size_pt, label, expect_bold=None, check_indent=F
             warn(f"{label}「{text[:12]}…」加粗状态 {bolds} 与预期 {expect_bold} 不符")
 
 
-HEADING_PREFIXES = ("一、", "二、", "三、", "（一）", "（二）", "（三）")
+def case_preamble_indexes(doc) -> set:
+    """案例前言区＝首个章节标题之前的全部非空段落。
+
+    模板固定为「附件编号 → 材料提交案例 → 案例主标题 → 身份行」，与活动主题无关，
+    因此整体按位置跳过，不匹配任何主题字面量，也不依赖标题的写法。
+    """
+    skip = set()
+    for index, para in enumerate(doc.paragraphs):
+        text = norm(para.text)
+        if any(text.startswith(h) for h in CASE_HEADINGS):
+            break
+        if text:
+            skip.add(index)
+    return skip
 
 
 def check_case(doc):
@@ -93,17 +113,14 @@ def check_case(doc):
     expected = [h for h in CASE_HEADINGS if h in order]
     if order != expected:
         err(f"章节顺序异常：{order}")
+    preamble = case_preamble_indexes(doc)
     body_count = 0
-    for para in doc.paragraphs:
+    for index, para in enumerate(doc.paragraphs):
         text = norm(para.text)
-        if not text:
+        if not text or index in preamble:
             continue
-        if any(text.startswith(h) for h in CASE_HEADINGS) or text in ("附件3：", "材料提交案例"):
+        if any(text.startswith(h) for h in CASE_HEADINGS):
             continue
-        if text.startswith("“国家安全") and text.endswith("案例"):
-            continue  # 案例主标题
-        if len(text) < 30 and text.endswith(("支部", "团支部")):
-            continue  # 身份行
         body_count += 1
         check_run_font(para, 14, "案例正文", expect_bold=False, check_indent=True)
     info(f"案例正文段落 {body_count} 段")
@@ -117,7 +134,6 @@ def check_reflection(doc):
     title, identity = paras[0], paras[1] if len(paras) > 1 else None
     if not title.text.strip().endswith(("心得体会", "读后感")):
         warn(f"首段不像标题：{title.text.strip()[:20]}")
-    from docx.shared import Pt
     for run in title.runs:
         if run.font.size is not None and run.font.size != Pt(16):
             err(f"心得标题字号 {run.font.size.pt} 应为 16pt（三号）")
@@ -141,14 +157,6 @@ def check_table(doc):
     for label in TABLE_LABELS:
         if not any(lb.startswith(label) for lb in labels_seen):
             err(f"缺少字段行：{label}")
-    for r, row in enumerate(table.rows):
-        for c, cell in enumerate(row.cells):
-            text = cell.text
-            for token in FORBIDDEN:
-                if token in text:
-                    err(f"表格({r},{c})发现禁留占位：{token}")
-            if norm(cell.text).startswith("学院团委意见") or (r > 0 and "团委" in norm(table.cell(r - 1, 0).text)):
-                continue
     # 学院团委意见栏：除“盖章/年 月 日”外不得有内容
     for r in range(len(table.rows)):
         if "学院团委意见" in norm(table.cell(r, 0).text):
@@ -172,8 +180,11 @@ def main() -> int:
     parser.add_argument("--kind", choices=["case", "table", "reflection", "auto"], default="auto")
     args = parser.parse_args()
 
+    total_errors = 0
     for path in map(Path, args.docx):
         name = path.name
+        for bucket in (errors, warns, infos):
+            bucket.clear()
         doc = Document(str(path))
         kind = args.kind if args.kind != "auto" else detect_kind(doc)
         print(f"== {name}（识别为 {kind}）")
@@ -190,15 +201,17 @@ def main() -> int:
             check_reflection(doc)
         elif kind == "table":
             check_table(doc)
-
-    for msg in errors:
-        print(f"[ERROR] {msg}")
-    for msg in warns:
-        print(f"[WARN] {msg}")
-    for msg in infos:
-        print(f"[INFO] {msg}")
-    print(f"结果：{len(errors)} 个错误，{len(warns)} 个警告")
-    return 1 if errors else 0
+        for msg in errors:
+            print(f"[ERROR] {name}｜{msg}")
+        for msg in warns:
+            print(f"[WARN] {name}｜{msg}")
+        for msg in infos:
+            print(f"[INFO] {name}｜{msg}")
+        print(f"结果：{name} {len(errors)} 个错误，{len(warns)} 个警告")
+        total_errors += len(errors)
+    if len(args.docx) > 1:
+        print(f"合计：{total_errors} 个错误")
+    return 1 if total_errors else 0
 
 
 if __name__ == "__main__":
