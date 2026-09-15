@@ -31,12 +31,24 @@ def archive_path():
 
 
 def default_cache_dir():
-    """解析默认解压缓存目录；候选落在 C 盘时返回 None，与 bootstrap_engine.py 口径一致。"""
+    """解析默认解压缓存目录，与 bootstrap_engine.py 口径一致。
+
+    候选顺序：``PPT_MASTER_CACHE_DIR`` → skill 同级 ``_engine/`` → 当前目录
+    ``_engine/``；全部落在 C 盘时返回 None（引擎缓存不许进系统盘）。只取
+    ``SKILL_ROOT.parent`` 会漏掉 ``bootstrap_engine.py`` 实际落盘的
+    ``<cwd>/_engine``，导致已解压的引擎被误报为“未定位到”。
+    """
+    bases = []
     base = os.environ.get("PPT_MASTER_CACHE_DIR", "").strip()
-    candidate = (Path(base) / CACHE_DIR_NAME) if base else (SKILL_ROOT.parent / "_engine" / CACHE_DIR_NAME)
-    if os.path.splitdrive(str(candidate))[0].upper() == "C:":
-        return None
-    return candidate
+    if base:
+        bases.append(Path(base))
+    bases.append(SKILL_ROOT.parent / "_engine")
+    bases.append(Path.cwd() / "_engine")
+    for item in bases:
+        candidate = item / CACHE_DIR_NAME
+        if os.path.splitdrive(str(candidate))[0].upper() != "C:":
+            return candidate
+    return None
 
 
 ENGINE_REQUIRED_STRUCTURE = ("workflows", "templates", "references", "scripts")
